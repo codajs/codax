@@ -1,0 +1,36 @@
+#!/usr/bin/env electron
+
+var electron = require('electron');
+var http = require('http');
+
+var app = electron.app;
+
+app.on('ready', function() {
+  var window = new electron.BrowserWindow({
+  });
+
+  var request = http.request({
+    port: 9222,
+    host: 'localhost',
+    path: '/json/list',
+  });
+
+  request.on('response', function(response) {
+    var data = '';
+
+    response.on('data', function(chunk) {
+      data += chunk;
+    });
+
+    response.on('end', function() {
+      var page = JSON.parse(data).find(function(target) {
+        return target.webSocketDebuggerUrl;
+      });
+
+      window.loadURL('chrome-devtools://devtools/bundled/inspector.html?ws=' + page.webSocketDebuggerUrl.slice(4));
+      window.show();
+    });
+   });
+
+  request.end();
+});
